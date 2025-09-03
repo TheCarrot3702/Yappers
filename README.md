@@ -11,6 +11,7 @@ ng serve
 ```
 
 Once the server is running, open your browser and navigate to `http://localhost:4200/`. The application will automatically reload whenever you modify any of the source files.
+Log in to the application using, base user username:user and password:user . Group admin username:group and password:group. Super admin username:super and password:super .
 
 ## Code scaffolding
 
