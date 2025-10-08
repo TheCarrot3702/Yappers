@@ -18,7 +18,7 @@ export class UsersComponent {
     this.refresh();
   }
 
-  /** 🔄 Load all users, filtered by current user's role */
+  /** Load all users, filtered by current user's role */
   refresh() {
     const all = this.users.list() || [];
     const role = this.auth.role();
@@ -44,7 +44,7 @@ export class UsersComponent {
     }
   }
 
-  /** ➕ Create new user */
+  /** Create new user */
   add() {
     const username = this.form.username.trim();
     const email = this.form.email.trim();
@@ -63,7 +63,7 @@ export class UsersComponent {
     }
   }
 
-  /** 🔍 Check if the current user can delete a target user */
+  /** Check if the current user can delete a target user */
   canDelete(user: AppUser): boolean {
     const role = this.auth.role();
     const currentUser = this.auth.username();
@@ -74,7 +74,7 @@ export class UsersComponent {
     return false;
   }
 
-  /** 🗑️ Remove user (with confirmation) */
+  /** Remove user (with confirmation) */
   remove(username: string) {
     const current = this.auth.username();
     if (!confirm(`Are you sure you want to delete "${username}"?`)) return;
@@ -89,7 +89,7 @@ export class UsersComponent {
     }
   }
 
-  /** 🧱 Promote a user to Group Admin */
+  /** Promote a user to Group Admin */
   promoteToGroupAdmin(user: AppUser) {
     if (!confirm(`Promote ${user.username} to Group Admin?`)) return;
 
@@ -104,7 +104,7 @@ export class UsersComponent {
     }
   }
 
-  /** 👑 Promote a user to Super Admin */
+  /** Promote a user to Super Admin */
   promoteToSuperAdmin(user: AppUser) {
     if (!confirm(`Promote ${user.username} to Super Admin?`)) return;
 

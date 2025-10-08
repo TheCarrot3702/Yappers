@@ -24,24 +24,24 @@ export class ChatService {
   messages$ = this.source.asObservable();
 
   constructor(private auth: AuthService) {
-    // ✅ connect to backend
+    // connect to backend
     this.socket = io('http://localhost:3000');
 
-    // 🔄 load history on join
+    // load history on join
     this.socket.on('loadHistory', (msgs: any[]) => {
       const normalized = msgs.map(this.normalize);
       this.all = [...this.all, ...normalized];
       this.source.next(this.all);
     });
 
-    // 📨 new messages
+    // new messages
     this.socket.on('receiveMessage', (msg: any) => {
       const normalized = this.normalize(msg);
       this.all.push(normalized);
       this.source.next(this.all);
     });
 
-    // 🧠 system messages
+    // system messages
     this.socket.on('systemMessage', (msg: any) => {
       const normalized: ChatMessage = {
         username: msg.username || 'System',

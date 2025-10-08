@@ -39,7 +39,7 @@ export class ChatComponent implements OnInit, OnChanges, OnDestroy {
     private upload: UploadService
   ) {}
 
-  // 🔹 Initialize and subscribe to chat messages
+  // Initialize and subscribe to chat messages
   ngOnInit() {
     this.joinIfPossible();
 
@@ -56,7 +56,7 @@ export class ChatComponent implements OnInit, OnChanges, OnDestroy {
     });
   }
 
-  // 🔹 Rejoin channel when group or channel input changes
+  // Rejoin channel when group or channel input changes
   ngOnChanges(changes: SimpleChanges) {
     if (
       (changes['channel'] && !changes['channel'].firstChange) ||
@@ -66,7 +66,7 @@ export class ChatComponent implements OnInit, OnChanges, OnDestroy {
     }
   }
 
-  // 🔹 Leave channel when component is destroyed
+  // Leave channel when component is destroyed
   ngOnDestroy() {
     const username = this.auth.username();
     if (username && this.channel) {
@@ -74,7 +74,7 @@ export class ChatComponent implements OnInit, OnChanges, OnDestroy {
     }
   }
 
-  /** 🔸 Join the channel if info available */
+  /** Join the channel if info available */
   private joinIfPossible(rejoin = false) {
     const username = this.auth.username();
     if (!username || !this.channel || !this.groupId) return;
@@ -83,7 +83,7 @@ export class ChatComponent implements OnInit, OnChanges, OnDestroy {
     this.chat.joinChannel(this.groupId, this.channel, username);
   }
 
-  /** ✉️ Send a text message */
+  /** Send a text message */
   sendMessage() {
     const text = this.newMessage.trim();
     const username = this.auth.username();
@@ -93,7 +93,7 @@ export class ChatComponent implements OnInit, OnChanges, OnDestroy {
     this.newMessage = '';
   }
 
-  /** 🖼️ Send image after upload */
+  /** Send image after upload */
   async onPickImage(ev: Event) {
     const input = ev.target as HTMLInputElement;
     const file = input?.files?.[0];
@@ -127,7 +127,7 @@ export class ChatComponent implements OnInit, OnChanges, OnDestroy {
     }
   }
 
-  /** 🕓 Simulated load of older messages */
+  /** Simulated load of older messages */
   private async loadOlderMessages() {
     console.log('Loading older messages...');
     setTimeout(() => {
@@ -135,7 +135,7 @@ export class ChatComponent implements OnInit, OnChanges, OnDestroy {
     }, 500);
   }
 
-  /** 📍 Smooth scroll to bottom */
+  /** Smooth scroll to bottom */
   private scrollToBottom(force = false) {
     const el = this.chatWindow?.nativeElement;
     if (!el) return;

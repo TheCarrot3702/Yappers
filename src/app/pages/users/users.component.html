@@ -43,7 +43,7 @@
         <td>{{ u.groups.length ? u.groups.join(', ') : '-' }}</td>
 
         <td>
-          <!-- 🔮 Super Admin actions -->
+          <!-- Super Admin actions -->
           <ng-container *ngIf="auth.role() === 'super-admin'">
             <button
               *ngIf="!u.roles.includes('group-admin')"
@@ -60,12 +60,12 @@
             <button (click)="remove(u.username)">Delete</button>
           </ng-container>
 
-          <!-- 🧩 Group Admin actions -->
+          <!-- Group Admin actions -->
           <ng-container *ngIf="auth.role() === 'group-admin' && canDelete(u)">
             <button (click)="remove(u.username)">Delete</button>
           </ng-container>
 
-          <!-- 👤 Regular user self-delete -->
+          <!-- Regular user self-delete -->
           <ng-container
             *ngIf="auth.role() === 'user' && u.username === auth.username()"
           >

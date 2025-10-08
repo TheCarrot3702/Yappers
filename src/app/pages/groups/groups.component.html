@@ -6,12 +6,12 @@
     </div>
   </div>
 
-  <!-- 🌀 Loading indicator -->
+  <!-- Loading indicator -->
   <div *ngIf="!list || list.length === 0" class="muted" style="margin: 12px 0;">
     Loading groups or none available...
   </div>
 
-  <!-- 🧭 GROUP MANAGEMENT PANEL -->
+  <!-- GROUP MANAGEMENT PANEL -->
     <p style="color:#555; font-size:0.9em;">
   Debug → {{ list?.length }} groups loaded.
 </p>
@@ -99,7 +99,7 @@
     </div>
   </div>
 
-  <!-- 💬 ACTIVE GROUP CHAT + CHANNEL SIDEBAR -->
+  <!-- ACTIVE GROUP CHAT + CHANNEL SIDEBAR -->
   <div *ngIf="activeGroup" class="group-layout">
     <!-- Sidebar for Channels -->
     <div class="sidebar">
@@ -122,7 +122,7 @@
         [channel]="activeChannel"
       ></app-chat>
 
-      <!-- 👥 MEMBER MANAGEMENT -->
+      <!-- MEMBER MANAGEMENT -->
       <div *ngIf="canManageGroup(activeGroup)" class="member-panel">
         <h4>Members</h4>
         <ul>
@@ -145,7 +145,7 @@
           </li>
         </ul>
 
-        <!-- 📨 JOIN REQUESTS -->
+        <!-- JOIN REQUESTS -->
         <h4>Join Requests</h4>
         <ul *ngIf="activeGroup.joinRequests.length; else noRequests">
           <li *ngFor="let r of activeGroup.joinRequests">

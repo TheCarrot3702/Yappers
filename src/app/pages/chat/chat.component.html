@@ -1,17 +1,17 @@
 <div class="chat-container">
-  <!-- 💬 Chat Messages -->
+  <!-- Chat Messages -->
   <div #chatWindow class="chat-window">
     <div *ngFor="let m of messages" [ngClass]="{
         'message self': m.username === auth.username(),
         'message other': m.username !== auth.username()
       }">
       
-      <!-- 🟡 System Message -->
+      <!-- System Message -->
       <div *ngIf="m.type === 'system'" class="system-message">
         <em>{{ m.message }}</em>
       </div>
 
-      <!-- 🟢 Text or Image Message -->
+      <!-- Text or Image Message -->
       <div *ngIf="m.type !== 'system'" class="message-bubble">
         <!-- Avatar (only for others) -->
         <img
@@ -42,7 +42,7 @@
     </div>
   </div>
 
-  <!-- 🖊️ Input Area -->
+  <!-- Input Area -->
   <div class="chat-input">
     <input
       type="text"

@@ -1,4 +1,9 @@
-// server/index.js
+// ============================================================
+// 🌐 Main Server Entry Point
+// ------------------------------------------------------------
+// Sets up Express, MongoDB, Socket.IO, PeerJS, and upload routes
+// ============================================================
+
 import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
@@ -27,7 +32,7 @@ app.use(express.json());
 const server = http.createServer(app);
 const io = new Server(server, { cors: { origin: "*" } });
 
-// 🎥 PeerJS for video chat
+// 🎥 PeerJS handles video chat connections
 const peerServer = ExpressPeerServer(server, { path: "/" });
 app.use("/peerjs", peerServer);
 
@@ -43,7 +48,7 @@ const db = getDb();
 app.get("/api/ping", (_, res) => res.json({ success: true }));
 
 // ---------------------------------------------------------
-// 🖼️ Uploads (images & avatars)
+// 🖼️ File Upload Handling (Chat & Avatars)
 // ---------------------------------------------------------
 const uploadRoot = path.join(__dirname, "uploads");
 const chatDir = path.join(uploadRoot, "chat");
@@ -54,6 +59,7 @@ app.use("/uploads/chat", express.static(chatDir));
 app.use("/uploads/avatars", express.static(avatarDir));
 app.use("/api/groups", groupRoutes);
 
+// Configure Multer storage engines
 const chatStorage = multer.diskStorage({
   destination: (_, __, cb) => cb(null, chatDir),
   filename: (_, file, cb) => cb(null, Date.now() + "-" + file.originalname.replace(/\s+/g, "_")),
@@ -67,6 +73,7 @@ const avatarStorage = multer.diskStorage({
 const uploadChat = multer({ storage: chatStorage });
 const uploadAvatar = multer({ storage: avatarStorage });
 
+// 📦 Upload endpoints
 app.post("/api/upload", uploadChat.single("file"), (req, res) => {
   if (!req.file) return res.status(400).json({ error: "No file uploaded" });
   const url = `http://localhost:${process.env.PORT}/uploads/chat/${req.file.filename}`;
@@ -89,20 +96,20 @@ app.post("/api/upload/avatar", uploadAvatar.single("file"), async (req, res) => 
 });
 
 // ---------------------------------------------------------
-// 👥 Register Routes
+// 👥 API Routes
 // ---------------------------------------------------------
 app.use("/api/users", usersRouter);
 app.use("/api/groups", groupsRouter);
 app.use("/api/messages", messagesRouter);
 
 // ---------------------------------------------------------
-// 💬 Sockets for chat
+// 💬 Socket.IO Chat Handling
 // ---------------------------------------------------------
 io.on("connection", (socket) => {
   console.log("🟢 User connected:", socket.id);
 
+  // Join channel and send history
   socket.on("joinChannel", async ({ groupId, channel, username }) => {
-    // ✅ Use groupId:channel room to isolate groups
     const room = `${groupId}:${channel}`;
     socket.join(room);
 
@@ -110,7 +117,6 @@ io.on("connection", (socket) => {
     const user = await usersCol.findOne({ username });
     if (!user) await usersCol.insertOne({ username, avatarUrl: null });
 
-    // ✅ Load and send last 50 messages
     const history = await db
       .collection("messages")
       .find({ groupId, channel })
@@ -120,7 +126,7 @@ io.on("connection", (socket) => {
 
     socket.emit("loadHistory", history.reverse());
 
-    // ✅ Broadcast system join message
+    // Broadcast system join message
     const joinMsg = {
       type: "system",
       username,
@@ -129,12 +135,13 @@ io.on("connection", (socket) => {
       channel,
       timestamp: new Date().toISOString(),
     };
-    await db.collection("messages").insertOne(joinMsg); // optional but keeps it in history
+    await db.collection("messages").insertOne(joinMsg);
     io.to(room).emit("systemMessage", joinMsg);
 
     console.log(`✅ ${username} joined ${room}`);
   });
 
+  // Text message
   socket.on("sendMessage", async ({ groupId, channel, username, message, avatarUrl }) => {
     const msg = {
       username,
@@ -149,6 +156,7 @@ io.on("connection", (socket) => {
     io.to(`${groupId}:${channel}`).emit("receiveMessage", msg);
   });
 
+  // Image message
   socket.on("sendImage", async ({ groupId, channel, username, imageUrl, avatarUrl }) => {
     const msg = {
       username,
@@ -163,11 +171,11 @@ io.on("connection", (socket) => {
     io.to(`${groupId}:${channel}`).emit("receiveMessage", msg);
   });
 
+  // Leave channel
   socket.on("leaveChannel", async ({ groupId, channel, username }) => {
     const room = `${groupId}:${channel}`;
     socket.leave(room);
 
-    // ✅ Broadcast system leave message
     const leaveMsg = {
       type: "system",
       username,
@@ -176,7 +184,7 @@ io.on("connection", (socket) => {
       channel,
       timestamp: new Date().toISOString(),
     };
-    await db.collection("messages").insertOne(leaveMsg); // optional
+    await db.collection("messages").insertOne(leaveMsg);
     io.to(room).emit("systemMessage", leaveMsg);
 
     console.log(`🔴 ${username} left ${room}`);
@@ -186,7 +194,6 @@ io.on("connection", (socket) => {
     console.log("🔴 User disconnected:", socket.id);
   });
 });
-
 
 // ---------------------------------------------------------
 // 🚀 Start Server
@@ -201,4 +208,3 @@ if (process.env.NODE_ENV !== "test") {
 }
 
 export { app, server };
-

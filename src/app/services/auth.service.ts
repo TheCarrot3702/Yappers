@@ -32,7 +32,7 @@ export class AuthService {
     });
   }
 
-  /** 🧠 Load session safely from localStorage */
+  /** Load session safely from localStorage */
   private loadSession(): Session | null {
     try {
       const raw = localStorage.getItem(this.key);
@@ -44,28 +44,28 @@ export class AuthService {
     }
   }
 
-  /** 💾 Save session to localStorage */
+  /** Save session to localStorage */
   private saveSession(session: Session): void {
     localStorage.setItem(this.key, JSON.stringify(session));
     this.sessionSubject.next(session);
   }
 
-  /** 📦 Current session getter */
+  /** Current session getter */
   get session(): Session | null {
     return this.sessionSubject.value;
   }
 
-  /** 🧍 Get current username */
+  /** Get current username */
   username(): string {
     return this.session?.username ?? 'Anonymous';
   }
 
-  /** 🧑‍🎨 Get current avatar URL */
+  /** Get current avatar URL */
   avatar(): string | null {
     return this.session?.avatarUrl ?? null;
   }
 
-  /** 🔑 Attempt login with demo credentials */
+  /** Attempt login with demo credentials */
   login(username: string, password: string): boolean {
     const map: Record<string, { pass: string; role: Role; avatarUrl?: string }> = {
       super: {
@@ -99,7 +99,7 @@ export class AuthService {
     return false;
   }
 
-  /** 🧩 Update avatar image URL */
+  /** Update avatar image URL */
   updateAvatar(url: string): void {
     const current = this.session;
     if (!current) return;
@@ -107,18 +107,18 @@ export class AuthService {
     this.saveSession(updated);
   }
 
-  /** 🚪 Log out and clear session */
+  /** Log out and clear session */
   logout(): void {
     localStorage.removeItem(this.key);
     this.sessionSubject.next(null);
   }
 
-  /** ✅ Check if user is logged in */
+  /** Check if user is logged in */
   isLoggedIn(): boolean {
     return !!this.session;
   }
 
-  /** 🎭 Get current user role */
+  /** Get current user role */
   role(): Role | null {
     return this.session?.role ?? null;
   }

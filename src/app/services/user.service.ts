@@ -14,7 +14,7 @@ export interface AppUser {
 export class UserService {
   private key = 'users';
 
-  /** 📦 Load users from localStorage or seed defaults */
+  /** Load users from localStorage or seed defaults */
   private load(): AppUser[] {
     const raw = localStorage.getItem(this.key);
     if (raw) return JSON.parse(raw);
@@ -51,17 +51,17 @@ export class UserService {
     return seed;
   }
 
-  /** 💾 Save to localStorage */
+  /** Save to localStorage */
   private save(list: AppUser[]) {
     localStorage.setItem(this.key, JSON.stringify(list));
   }
 
-  /** 📋 Return all users */
+  /** Return all users */
   list(): AppUser[] {
     return this.load();
   }
 
-  /** ➕ Create a new user (default role: user) */
+  /** Create a new user (default role: user) */
   create(username: string, email: string): AppUser {
     const list = this.load();
     const normalized = username.trim().toLowerCase();
@@ -84,20 +84,20 @@ export class UserService {
     return newUser;
   }
 
-  /** 🗑️ Delete user by username */
+  /** Delete user by username */
   delete(username: string) {
     const normalized = username.trim().toLowerCase();
     const updated = this.load().filter(u => u.username !== normalized);
     this.save(updated);
   }
 
-  /** 🔍 Find user by username */
+  /** Find user by username */
   findByUsername(username: string): AppUser | undefined {
     const normalized = username.trim().toLowerCase();
     return this.load().find(u => u.username === normalized);
   }
 
-  /** ✏️ Update existing user (roles, email, etc.) */
+  /** Update existing user (roles, email, etc.) */
   update(user: AppUser) {
     const list = this.load();
     const idx = list.findIndex(u => u.username === user.username);
@@ -107,7 +107,7 @@ export class UserService {
     }
   }
 
-  /** 🔼 Promote user to Group Admin */
+  /** Promote user to Group Admin */
   promoteToGroupAdmin(username: string) {
     const list = this.load();
     const user = list.find(u => u.username === username.trim().toLowerCase());
@@ -119,7 +119,7 @@ export class UserService {
     }
   }
 
-  /** 👑 Promote user to Super Admin */
+  /** Promote user to Super Admin */
   promoteToSuperAdmin(username: string) {
     const list = this.load();
     const user = list.find(u => u.username === username.trim().toLowerCase());
@@ -131,7 +131,7 @@ export class UserService {
     }
   }
 
-  /** 🔽 Demote user to regular user (optional feature) */
+  /** Demote user to regular user (optional feature) */
   demote(username: string) {
     const list = this.load();
     const user = list.find(u => u.username === username.trim().toLowerCase());
@@ -142,7 +142,7 @@ export class UserService {
     this.save(list);
   }
 
-  /** 👥 Add user to a group */
+  /** Add user to a group */
   joinGroup(username: string, groupId: string) {
     const list = this.load();
     const user = list.find(u => u.username === username);
@@ -155,7 +155,7 @@ export class UserService {
     }
   }
 
-  /** 🚪 Remove user from a group */
+  /** Remove user from a group */
   leaveGroup(username: string, groupId: string) {
     const list = this.load();
     const user = list.find(u => u.username === username);
@@ -165,7 +165,7 @@ export class UserService {
     this.save(list);
   }
 
-  /** 📨 User requests to join a group */
+  /** User requests to join a group */
   requestGroup(username: string, groupId: string) {
     const list = this.load();
     const user = list.find(u => u.username === username);
@@ -180,7 +180,7 @@ export class UserService {
     }
   }
 
-  /** 🔄 Reset demo users (utility for testing) */
+  /** Reset demo users (utility for testing) */
   resetDemoData() {
     localStorage.removeItem(this.key);
     this.load();

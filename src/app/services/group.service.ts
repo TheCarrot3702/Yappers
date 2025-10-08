@@ -14,12 +14,11 @@ export interface Group {
 
 @Injectable({ providedIn: 'root' })
 export class GroupService {
-  /** Adjust to your backend URL if needed */
   private readonly baseUrl = 'http://localhost:3000/api/groups';
 
   constructor(private http: HttpClient) {}
 
-  /** 🔹 Fetch all groups */
+  /** Fetch all groups */
   async list(): Promise<Group[]> {
     try {
       const res = await firstValueFrom(this.http.get<Group[]>(this.baseUrl));
@@ -30,7 +29,7 @@ export class GroupService {
     }
   }
 
-  /** 🔹 Create a new group */
+  /** Create a new group */
   async create(name: string, ownerUsername: string): Promise<void> {
     try {
       await firstValueFrom(
@@ -42,7 +41,7 @@ export class GroupService {
     }
   }
 
-  /** 🔹 Add a new channel */
+  /** Add a new channel */
   async addChannel(groupId: string, channel: string): Promise<void> {
     try {
       await firstValueFrom(
@@ -54,7 +53,7 @@ export class GroupService {
     }
   }
 
-  /** 🔹 Remove a channel */
+  /** Remove a channel */
   async removeChannel(groupId: string, channel: string): Promise<void> {
     try {
       await firstValueFrom(
@@ -66,7 +65,7 @@ export class GroupService {
     }
   }
 
-  /** 🔹 Request to join group */
+  /** Request to join group */
   async requestJoin(groupId: string, username: string): Promise<void> {
     try {
       await firstValueFrom(
@@ -78,7 +77,7 @@ export class GroupService {
     }
   }
 
-  /** 🔹 Approve join request */
+  /** Approve join request */
   async approveJoin(groupId: string, username: string): Promise<void> {
     try {
       await firstValueFrom(
@@ -90,7 +89,7 @@ export class GroupService {
     }
   }
 
-  /** 🔹 Reject join request */
+  /** Reject join request */
   async rejectJoin(groupId: string, username: string): Promise<void> {
     try {
       await firstValueFrom(
@@ -102,7 +101,7 @@ export class GroupService {
     }
   }
 
-  /** 🔹 Remove a member from the group */
+  /** Remove a member from the group */
   async removeMember(groupId: string, username: string): Promise<void> {
     try {
       await firstValueFrom(
@@ -116,7 +115,7 @@ export class GroupService {
     }
   }
 
-  /** 🔹 Delete a group */
+  /** Delete a group */
   async remove(groupId: string): Promise<void> {
     try {
       await firstValueFrom(
@@ -128,7 +127,7 @@ export class GroupService {
     }
   }
 
-  /** 🔹 Ban a user from a specific channel */
+  /** Ban a user from a specific channel */
   async banUserFromChannel(
     groupId: string,
     channel: string,
