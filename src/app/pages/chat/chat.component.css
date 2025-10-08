@@ -1,0 +1,129 @@
+/* -----------------------------
+   🧩 CHAT WINDOW
+------------------------------ */
+.chat-window {
+  height: 400px;
+  overflow-y: auto;
+  padding: 12px;
+  background: #f8f9fc;
+  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* -----------------------------
+   💬 MESSAGE BUBBLES
+------------------------------ */
+.message {
+  max-width: 75%;
+  display: flex;
+  flex-direction: column;
+  padding: 4px 8px;
+}
+
+/* Align based on sender */
+.message.other {
+  align-self: flex-start;
+}
+
+.message.self {
+  align-self: flex-end;
+  text-align: right;
+}
+
+/* Meta info (username + time) */
+.meta {
+  font-size: 0.75rem;
+  color: #555;
+  margin-bottom: 3px;
+  display: flex;
+  justify-content: space-between;
+}
+
+/* Bubble base style */
+.bubble {
+  border-radius: 12px;
+  padding: 8px 12px;
+  font-size: 0.95rem;
+  line-height: 1.4;
+  word-wrap: break-word;
+  color: #000;
+}
+
+/* Current user (blue bubble, right) */
+.message.self .bubble {
+  background: #007bff;
+  color: #fff;
+}
+
+/* Other users (light bubble, left) */
+.message.other .bubble {
+  background: #e8f0fe;
+  color: #000;
+}
+
+/* -----------------------------
+   ✏️ CHAT INPUT AREA
+------------------------------ */
+.chat-input {
+  display: flex;
+  align-items: center;
+  background: #e8ecff;
+  padding: 8px 10px;
+  border-top: 1px solid #c7d2fe;
+  gap: 8px;
+  border-radius: 0 0 8px 8px;
+}
+
+/* Textbox */
+.chat-textbox {
+  flex: 1;
+  padding: 10px 12px;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+  outline: none;
+  font-size: 14px;
+  color: #000;
+  min-width: 0;
+}
+
+.chat-textbox:focus {
+  border-color: #3b82f6;
+  background: #fff;
+}
+
+/* Compact Send button */
+.chat-button {
+  background: #2563eb;
+  color: white;
+  max-width: 60px;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-size: 14px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.2s, transform 0.1s;
+}
+
+.chat-button:hover {
+  background: #1d4ed8;
+  transform: scale(1.05);
+}
+
+/* -----------------------------
+   🔽 SCROLLBAR STYLING
+------------------------------ */
+.chat-window::-webkit-scrollbar {
+  width: 6px;
+}
+
+.chat-window::-webkit-scrollbar-thumb {
+  background: #c5c5c5;
+  border-radius: 3px;
+}
+
+.chat-window::-webkit-scrollbar-thumb:hover {
+  background: #a0a0a0;
+}

@@ -1,0 +1,11 @@
+<div class="card">
+  <h1>Sign in</h1>
+  <form (ngSubmit)="submit()">
+    <label>Username</label>
+    <input [(ngModel)]="username" name="username" required />
+    <label>Password</label>
+    <input [(ngModel)]="password" name="password" type="password" required />
+    <button [disabled]="loading">Login</button>
+    <p class="muted">{{ msg }}</p>
+  </form>
+</div>

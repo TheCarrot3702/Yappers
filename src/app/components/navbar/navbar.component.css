@@ -1,0 +1,79 @@
+.navbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: #0e1621;
+  color: white;
+  padding: 12px 24px;
+  font-family: 'Inter', sans-serif;
+}
+
+.nav-left .logo {
+  font-weight: bold;
+  color: white;
+  text-decoration: none;
+  font-size: 1.2rem;
+}
+
+.nav-center {
+  display: flex;
+  gap: 18px;
+}
+
+.nav-center a {
+  color: #00bfff;
+  text-decoration: none;
+  font-weight: 500;
+  transition: all 0.2s ease;
+  padding-bottom: 2px;
+}
+
+.nav-center a:hover,
+.nav-center a.active {
+  color: #fff;
+  border-bottom: 2px solid #00bfff;
+}
+
+/* Make sure right-side content stays visible */
+.nav-right {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+/* Wraps role badge + logout button together neatly */
+.role-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Role badge styling */
+.role-badge {
+  background: #007bff;
+  color: white;
+  padding: 6px 14px;
+  border-radius: 20px;
+  font-weight: 600;
+  text-transform: lowercase;
+  font-size: 0.85rem;
+  white-space: nowrap;
+}
+
+/* Logout button style */
+.logout-btn {
+  background: #dc3545;
+  border: none;
+  color: white;
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.logout-btn:hover {
+  background: #b52d3a;
+  transform: scale(1.05);
+}

@@ -1,0 +1,78 @@
+<div class="card">
+  <h2>Users</h2>
+
+  <!-- Create user: visible only for super or group admin -->
+  <div *ngIf="auth.role() === 'super-admin' || auth.role() === 'group-admin'">
+    <h3>Create New User</h3>
+    <input [(ngModel)]="form.username" placeholder="Username" />
+    <input [(ngModel)]="form.email" placeholder="Email" />
+    <button (click)="add()">Create</button>
+  </div>
+
+  <h3>All Users</h3>
+  <table class="table">
+    <thead>
+      <tr>
+        <th>Username</th>
+        <th>Email</th>
+        <th>Roles</th>
+        <th>Groups</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr *ngFor="let u of list">
+        <td>{{ u.username }}</td>
+        <td>{{ u.email }}</td>
+
+        <!-- Display roles with small colored badges -->
+        <td>
+          <span
+            *ngFor="let r of u.roles"
+            [ngClass]="{
+              'badge-super': r === 'super-admin',
+              'badge-group': r === 'group-admin',
+              'badge-user': r === 'user'
+            }"
+            class="role-badge"
+          >
+            {{ r }}
+          </span>
+        </td>
+
+        <td>{{ u.groups.length ? u.groups.join(', ') : '-' }}</td>
+
+        <td>
+          <!-- 🔮 Super Admin actions -->
+          <ng-container *ngIf="auth.role() === 'super-admin'">
+            <button
+              *ngIf="!u.roles.includes('group-admin')"
+              (click)="promoteToGroupAdmin(u)"
+            >
+              Make Group Admin
+            </button>
+            <button
+              *ngIf="!u.roles.includes('super-admin')"
+              (click)="promoteToSuperAdmin(u)"
+            >
+              Make Super Admin
+            </button>
+            <button (click)="remove(u.username)">Delete</button>
+          </ng-container>
+
+          <!-- 🧩 Group Admin actions -->
+          <ng-container *ngIf="auth.role() === 'group-admin' && canDelete(u)">
+            <button (click)="remove(u.username)">Delete</button>
+          </ng-container>
+
+          <!-- 👤 Regular user self-delete -->
+          <ng-container
+            *ngIf="auth.role() === 'user' && u.username === auth.username()"
+          >
+            <button (click)="remove(u.username)">Delete My Account</button>
+          </ng-container>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+</div>

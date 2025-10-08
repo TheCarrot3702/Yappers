@@ -1,0 +1,28 @@
+<div class="chat-window" #chatWindow>
+  <div
+    *ngFor="let m of messages"
+    [ngClass]="{
+      'message self': m.username === auth.username(),
+      'message other': m.username !== auth.username()
+    }"
+  >
+    <div class="meta">
+      <span class="username">
+        {{ m.username === auth.username() ? 'You' : m.username }}
+      </span>
+      <span class="time">{{ m.timestamp | date: 'shortTime' }}</span>
+    </div>
+    <div class="bubble">{{ m.message }}</div>
+  </div>
+</div>
+
+<div class="chat-input">
+  <!-- ✅ Make sure the input tag is properly closed -->
+  <input
+    [(ngModel)]="newMessage"
+    placeholder="Type a message..."
+    class="chat-textbox"
+    (keyup.enter)="sendMessage()"
+  />
+  <button (click)="sendMessage()" class="chat-button">Send</button>
+</div>

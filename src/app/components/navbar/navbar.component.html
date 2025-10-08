@@ -1,0 +1,24 @@
+<nav class="navbar">
+  <div class="nav-left">
+    <a routerLink="/" class="logo">Yappers</a>
+  </div>
+
+  <div class="nav-center" *ngIf="isLoggedIn">
+    <a routerLink="/home" routerLinkActive="active">Home</a>
+    <a
+      routerLink="/users"
+      *ngIf="role === 'super-admin' || role === 'group-admin'"
+      routerLinkActive="active"
+    >
+      Users
+    </a>
+    <a routerLink="/groups" routerLinkActive="active">Groups</a>
+  </div>
+
+  <div class="nav-right" *ngIf="isLoggedIn">
+    <div class="role-group">
+      <span class="role-badge">{{ role }}</span>
+      <button class="logout-btn" (click)="logout()">Logout</button>
+    </div>
+  </div>
+</nav>
