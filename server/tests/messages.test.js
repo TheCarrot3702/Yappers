@@ -1,6 +1,6 @@
 import request from "supertest";
 import { MongoClient } from "mongodb";
-import app from "../index.js";
+import { app } from '../index.js';
 
 let client, db, collections;
 let testGroupId = "test-group-id";

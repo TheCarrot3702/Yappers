@@ -1,23 +1,22 @@
-const { MongoClient } = require('mongodb');
+// server/db.js
+import { MongoClient } from "mongodb";
+import dotenv from "dotenv";
 
-const uri = process.env.MONGO_URI || 'mongodb://127.0.0.1:27017/yappers';
-let client, db;
+dotenv.config();
 
-async function connectMongo() {
-  if (db) return db;
-  client = new MongoClient(uri, { ignoreUndefined: true });
-  await client.connect();
-  db = client.db(); // default DB from URI
-  // Collections (create indexes as needed)
-  await db.collection('users').createIndex({ username: 1 }, { unique: true });
-  await db.collection('groups').createIndex({ name: 1 });
-  await db.collection('messages').createIndex({ groupId: 1, channel: 1, timestamp: 1 });
+const client = new MongoClient(process.env.MONGO_URI);
+let db;
+
+export async function connectMongo() {
+  if (!db) {
+    await client.connect();
+    db = client.db(process.env.MONGO_DB);
+    console.log(`✅ Connected to MongoDB db="${process.env.MONGO_DB}"`);
+  }
   return db;
 }
 
-function getDb() {
-  if (!db) throw new Error('Mongo not connected yet');
+export function getDb() {
+  if (!db) throw new Error("❌ MongoDB not connected yet!");
   return db;
 }
-
-module.exports = { connectMongo, getDb };

@@ -1,6 +1,6 @@
+// server/index.js
 import express from "express";
 import cors from "cors";
-import { MongoClient, ObjectId } from "mongodb";
 import dotenv from "dotenv";
 import http from "http";
 import { Server } from "socket.io";
@@ -8,8 +8,16 @@ import { ExpressPeerServer } from "peer";
 import multer from "multer";
 import fs from "fs";
 import path from "path";
+import { fileURLToPath } from "url";
+import { connectMongo, getDb } from "./db.js";
+import usersRouter from "./routes/users.js";
+import groupsRouter from "./routes/groups.js";
+import messagesRouter from "./routes/messages.js";
 
 dotenv.config();
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const app = express();
 app.use(cors());
@@ -18,31 +26,15 @@ app.use(express.json());
 const server = http.createServer(app);
 const io = new Server(server, { cors: { origin: "*" } });
 
-// PeerJS for video chat
+// 🎥 PeerJS for video chat
 const peerServer = ExpressPeerServer(server, { path: "/" });
 app.use("/peerjs", peerServer);
 
 // ---------------------------------------------------------
-// 🧠 MongoDB
+// 🧠 MongoDB Connection
 // ---------------------------------------------------------
-const client = new MongoClient(process.env.MONGO_URI);
-let db;
-const collections = {};
-
-async function connectDB() {
-  try {
-    await client.connect();
-    db = client.db(process.env.MONGO_DB);
-    collections.users = db.collection("users");
-    collections.groups = db.collection("groups");
-    collections.messages = db.collection("messages");
-
-    console.log(`✅ Connected to MongoDB db="${db.databaseName}"`);
-  } catch (err) {
-    console.error("❌ MongoDB connection failed:", err);
-  }
-}
-connectDB();
+await connectMongo();
+const db = getDb();
 
 // ---------------------------------------------------------
 // 🩺 Health Check
@@ -52,7 +44,7 @@ app.get("/api/ping", (_, res) => res.json({ success: true }));
 // ---------------------------------------------------------
 // 🖼️ Uploads (images & avatars)
 // ---------------------------------------------------------
-const uploadRoot = path.join(process.cwd(), "uploads");
+const uploadRoot = path.join(__dirname, "uploads");
 const chatDir = path.join(uploadRoot, "chat");
 const avatarDir = path.join(uploadRoot, "avatars");
 [uploadRoot, chatDir, avatarDir].forEach((d) => fs.mkdirSync(d, { recursive: true }));
@@ -84,7 +76,7 @@ app.post("/api/upload/avatar", uploadAvatar.single("file"), async (req, res) => 
   const username = req.body.username?.trim();
   const url = `http://localhost:${process.env.PORT}/uploads/avatars/${req.file.filename}`;
 
-  await collections.users.updateOne(
+  await db.collection("users").updateOne(
     { username },
     { $set: { username, avatarUrl: url } },
     { upsert: true }
@@ -95,39 +87,30 @@ app.post("/api/upload/avatar", uploadAvatar.single("file"), async (req, res) => 
 });
 
 // ---------------------------------------------------------
-// 👥 Groups CRUD
+// 👥 Register Routes
 // ---------------------------------------------------------
-app.get("/api/groups", async (_, res) => {
-  const groups = await collections.groups.find().toArray();
-  res.json(groups);
-});
-
-app.post("/api/groups", async (req, res) => {
-  const { name, ownerUsername } = req.body;
-  const group = {
-    name,
-    ownerUsername,
-    channels: ["General"],
-    members: [ownerUsername],
-    joinRequests: [],
-  };
-  const result = await collections.groups.insertOne(group);
-  res.status(201).json({ ...group, _id: result.insertedId });
-});
+app.use("/api/users", usersRouter);
+app.use("/api/groups", groupsRouter);
+app.use("/api/messages", messagesRouter);
 
 // ---------------------------------------------------------
-// 💬 Sockets
+// 💬 Sockets for chat
 // ---------------------------------------------------------
 io.on("connection", (socket) => {
   console.log("🟢 User connected:", socket.id);
 
   socket.on("joinChannel", async ({ groupId, channel, username }) => {
-    socket.join(channel);
+    // ✅ Use groupId:channel room to isolate groups
+    const room = `${groupId}:${channel}`;
+    socket.join(room);
 
-    const user = await collections.users.findOne({ username });
-    if (!user) await collections.users.insertOne({ username, avatarUrl: null });
+    const usersCol = db.collection("users");
+    const user = await usersCol.findOne({ username });
+    if (!user) await usersCol.insertOne({ username, avatarUrl: null });
 
-    const history = await collections.messages
+    // ✅ Load and send last 50 messages
+    const history = await db
+      .collection("messages")
       .find({ groupId, channel })
       .sort({ timestamp: -1 })
       .limit(50)
@@ -135,15 +118,19 @@ io.on("connection", (socket) => {
 
     socket.emit("loadHistory", history.reverse());
 
-    io.to(channel).emit("systemMessage", {
-      type: "join",
+    // ✅ Broadcast system join message
+    const joinMsg = {
+      type: "system",
       username,
-      text: `🟢 ${username} joined ${channel}`,
+      message: `🟢 ${username} joined ${channel}`,
+      groupId,
       channel,
-      timestamp: new Date(),
-    });
+      timestamp: new Date().toISOString(),
+    };
+    await db.collection("messages").insertOne(joinMsg); // optional but keeps it in history
+    io.to(room).emit("systemMessage", joinMsg);
 
-    console.log(`✅ ${username} joined ${channel}`);
+    console.log(`✅ ${username} joined ${room}`);
   });
 
   socket.on("sendMessage", async ({ groupId, channel, username, message, avatarUrl }) => {
@@ -156,8 +143,8 @@ io.on("connection", (socket) => {
       timestamp: new Date(),
       type: "text",
     };
-    await collections.messages.insertOne(msg);
-    io.to(channel).emit("receiveMessage", msg);
+    await db.collection("messages").insertOne(msg);
+    io.to(`${groupId}:${channel}`).emit("receiveMessage", msg);
   });
 
   socket.on("sendImage", async ({ groupId, channel, username, imageUrl, avatarUrl }) => {
@@ -170,19 +157,27 @@ io.on("connection", (socket) => {
       timestamp: new Date(),
       type: "image",
     };
-    await collections.messages.insertOne(msg);
-    io.to(channel).emit("receiveMessage", msg);
+    await db.collection("messages").insertOne(msg);
+    io.to(`${groupId}:${channel}`).emit("receiveMessage", msg);
   });
 
-  socket.on("leaveChannel", ({ channel, username }) => {
-    socket.leave(channel);
-    io.to(channel).emit("systemMessage", {
-      type: "leave",
+  socket.on("leaveChannel", async ({ groupId, channel, username }) => {
+    const room = `${groupId}:${channel}`;
+    socket.leave(room);
+
+    // ✅ Broadcast system leave message
+    const leaveMsg = {
+      type: "system",
       username,
-      text: `🔴 ${username} left ${channel}`,
+      message: `🔴 ${username} left ${channel}`,
+      groupId,
       channel,
-      timestamp: new Date(),
-    });
+      timestamp: new Date().toISOString(),
+    };
+    await db.collection("messages").insertOne(leaveMsg); // optional
+    io.to(room).emit("systemMessage", leaveMsg);
+
+    console.log(`🔴 ${username} left ${room}`);
   });
 
   socket.on("disconnect", () => {
@@ -190,8 +185,18 @@ io.on("connection", (socket) => {
   });
 });
 
+
+// ---------------------------------------------------------
+// 🚀 Start Server
+// ---------------------------------------------------------
 const PORT = process.env.PORT || 3000;
-server.listen(PORT, () => {
-  console.log(`🌐 API on http://localhost:${PORT}`);
-  console.log(`🎥 PeerJS on /peerjs`);
-});
+
+if (process.env.NODE_ENV !== "test") {
+  server.listen(PORT, () => {
+    console.log(`🌐 API running at http://localhost:${PORT}`);
+    console.log(`🎥 PeerJS available at /peerjs`);
+  });
+}
+
+export { app, server };
+

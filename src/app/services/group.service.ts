@@ -13,42 +13,36 @@ export interface Group {
 export class GroupService {
   private base = 'http://localhost:3000/api/groups';
 
-  /** 🧾 Get all groups */
   async list(): Promise<Group[]> {
     const res = await fetch(this.base);
-    return res.json();
+    return await res.json();
   }
 
-  /** ➕ Create new group */
-  async create(name: string, ownerUsername: string): Promise<Group> {
-    const res = await fetch(this.base, {
+  async create(name: string, ownerUsername: string) {
+    await fetch(this.base, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ name, ownerUsername }),
     });
-    return res.json();
   }
 
-  /** ➕ Add channel to group */
-  async addChannel(groupId: string, name: string): Promise<void> {
+  async addChannel(groupId: string, channel: string) {
     await fetch(`${this.base}/${groupId}/channels`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name }),
+      body: JSON.stringify({ channel }),
     });
   }
 
-  /** 📨 Request to join group */
-  async requestJoin(groupId: string, username: string): Promise<void> {
-    await fetch(`${this.base}/${groupId}/request`, {
+  async requestJoin(groupId: string, username: string) {
+    await fetch(`${this.base}/${groupId}/join`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ username }),
     });
   }
 
-  /** ✅ Approve join request */
-  async approveJoin(groupId: string, username: string): Promise<void> {
+  async approveJoin(groupId: string, username: string) {
     await fetch(`${this.base}/${groupId}/approve`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -56,39 +50,25 @@ export class GroupService {
     });
   }
 
-  /** 🚫 Remove member */
-  async removeMember(groupId: string, username: string): Promise<void> {
-    await fetch(`${this.base}/${groupId}/leave`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ username }),
-    });
+  async remove(id: string) {
+    await fetch(`${this.base}/${id}`, { method: 'DELETE' });
   }
 
-  /** 🧹 Delete group */
-  async remove(groupId: string): Promise<void> {
-    await fetch(`${this.base}/${groupId}`, { method: 'DELETE' });
+  async removeMember(groupId: string, username: string) {
+    await fetch(`${this.base}/${groupId}/members/${username}`, { method: 'DELETE' });
   }
 
-  /** 🚫 Remove channel (not required but added for completeness) */
-  async removeChannel(groupId: string, channelName: string): Promise<void> {
-    await fetch(`${this.base}/${groupId}/channels/remove`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name: channelName }),
-    });
-  }
-
-  /** 🚷 Ban user placeholder (you can expand later) */
   async banUserFromChannel(
     groupId: string,
     channel: string,
     username: string,
     reason: string,
     by: string
-  ): Promise<void> {
-    console.warn(
-      `🚷 Ban requested: ${username} from ${channel} (group ${groupId}) by ${by}: ${reason}`
-    );
+  ) {
+    await fetch(`${this.base}/${groupId}/bans`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ channel, username, reason, by }),
+    });
   }
 }

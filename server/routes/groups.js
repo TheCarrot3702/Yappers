@@ -1,84 +1,124 @@
-const express = require('express');
+// server/routes/groups.js
+import express from "express";
+import { ObjectId } from "mongodb";
+import { getDb } from "../db.js";
+
 const router = express.Router();
-const { getDb } = require('../db');
 
-router.get('/', async (req, res) => {
-  const groups = await getDb().collection('groups').find().toArray();
-  res.json(groups);
+// ✅ Get all groups
+router.get("/", async (req, res) => {
+  try {
+    const db = getDb();
+    const groups = await db.collection("groups").find().toArray();
+    res.json(groups);
+  } catch (err) {
+    console.error("❌ Failed to fetch groups:", err);
+    res.status(500).json({ error: "Failed to fetch groups" });
+  }
 });
 
-// expects: { name, ownerUsername, channels:[], members:[], joinRequests:[] }
-router.post('/', async (req, res) => {
-  const body = req.body || {};
-  const group = {
-    id: body.id || crypto.randomUUID(),
-    name: body.name,
-    ownerUsername: body.ownerUsername,
-    channels: body.channels || ['General'],
-    members: body.members || [],
-    joinRequests: body.joinRequests || []
-  };
-  await getDb().collection('groups').insertOne(group);
-  res.status(201).json(group);
+// ✅ Create a new group
+router.post("/", async (req, res) => {
+  try {
+    const db = getDb();
+    const { name, ownerUsername } = req.body;
+
+    if (!name || !ownerUsername)
+      return res.status(400).json({ error: "Missing name or ownerUsername" });
+
+    const group = {
+      name,
+      ownerUsername,
+      members: [ownerUsername],
+      joinRequests: [],
+      channels: ["General"],
+    };
+
+    const result = await db.collection("groups").insertOne(group);
+    res.status(201).json({ ...group, _id: result.insertedId });
+  } catch (err) {
+    console.error("❌ Failed to create group:", err);
+    res.status(500).json({ error: "Failed to create group" });
+  }
 });
 
-router.post('/:id/channels', async (req, res) => {
-  const { id } = req.params;
-  const { name } = req.body;
-  await getDb().collection('groups').updateOne(
-    { id },
-    { $addToSet: { channels: name } }
-  );
-  const g = await getDb().collection('groups').findOne({ id });
-  res.json(g);
+// ✅ Request to join a group
+router.post("/:id/request", async (req, res) => {
+  try {
+    const db = getDb();
+    const { username } = req.body;
+    const groupId = new ObjectId(req.params.id);
+
+    await db.collection("groups").updateOne(
+      { _id: groupId },
+      { $addToSet: { joinRequests: username } }
+    );
+
+    res.json({ success: true, message: `${username} requested to join group.` });
+  } catch (err) {
+    console.error("❌ Failed to request join:", err);
+    res.status(500).json({ error: "Failed to request join" });
+  }
 });
 
-router.post('/:id/join-requests', async (req, res) => {
-  const { id } = req.params;
-  const { username } = req.body;
-  await getDb().collection('groups').updateOne(
-    { id },
-    { $addToSet: { joinRequests: username } }
-  );
-  res.json({ ok: true });
+// ✅ Approve a join request
+router.post("/:id/approve", async (req, res) => {
+  try {
+    const db = getDb();
+    const { username } = req.body;
+    const groupId = new ObjectId(req.params.id);
+
+    await db.collection("groups").updateOne(
+      { _id: groupId },
+      {
+        $pull: { joinRequests: username },
+        $addToSet: { members: username },
+      }
+    );
+
+    res.json({ success: true, message: `${username} has been approved.` });
+  } catch (err) {
+    console.error("❌ Failed to approve join:", err);
+    res.status(500).json({ error: "Failed to approve join" });
+  }
 });
 
-router.post('/:id/approve', async (req, res) => {
-  const { id } = req.params;
-  const { username } = req.body;
-  const col = getDb().collection('groups');
-  await col.updateOne(
-    { id },
-    { $pull: { joinRequests: username }, $addToSet: { members: username } }
-  );
-  const g = await col.findOne({ id });
-  res.json(g);
+// ✅ Remove a member (user leaves or is removed)
+router.post("/:id/remove", async (req, res) => {
+  try {
+    const db = getDb();
+    const { username } = req.body;
+    const groupId = new ObjectId(req.params.id);
+
+    await db.collection("groups").updateOne(
+      { _id: groupId },
+      { $pull: { members: username } }
+    );
+
+    res.json({ success: true, message: `${username} removed from group.` });
+  } catch (err) {
+    console.error("❌ Failed to remove member:", err);
+    res.status(500).json({ error: "Failed to remove member" });
+  }
 });
 
-router.post('/:id/reject', async (req, res) => {
-  const { id } = req.params;
-  const { username } = req.body;
-  await getDb().collection('groups').updateOne(
-    { id },
-    { $pull: { joinRequests: username } }
-  );
-  res.json({ ok: true });
+// ✅ Add a new channel
+router.post("/:id/channel", async (req, res) => {
+  try {
+    const db = getDb();
+    const { channel } = req.body;
+    const groupId = new ObjectId(req.params.id);
+
+    await db.collection("groups").updateOne(
+      { _id: groupId },
+      { $addToSet: { channels: channel } }
+    );
+
+    res.json({ success: true, message: `Channel ${channel} added.` });
+  } catch (err) {
+    console.error("❌ Failed to add channel:", err);
+    res.status(500).json({ error: "Failed to add channel" });
+  }
 });
 
-router.post('/:id/remove-member', async (req, res) => {
-  const { id } = req.params;
-  const { username } = req.body;
-  await getDb().collection('groups').updateOne(
-    { id },
-    { $pull: { members: username } }
-  );
-  res.json({ ok: true });
-});
-
-router.delete('/:id', async (req, res) => {
-  const { id } = req.params;
-  await getDb().collection('groups').deleteOne({ id });
-  res.sendStatus(204);
-});
-
-module.exports = router;
+export default router;

@@ -7,6 +7,7 @@ import {
   SimpleChanges,
   ViewChild,
   ElementRef,
+  HostListener,
 } from '@angular/core';
 import { CommonModule, NgFor, DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -29,6 +30,9 @@ export class ChatComponent implements OnInit, OnChanges, OnDestroy {
   messages: ChatMessage[] = [];
   newMessage = '';
 
+  private isAtBottom = true;
+  private loadingOlder = false;
+
   constructor(
     public chat: ChatService,
     public auth: AuthService,
@@ -37,11 +41,17 @@ export class ChatComponent implements OnInit, OnChanges, OnDestroy {
 
   ngOnInit() {
     this.joinIfPossible();
+
     this.chat.messages$.subscribe((msgs) => {
+      // Show only messages for this group/channel
       this.messages = msgs.filter(
         (m) => m.groupId === this.groupId && m.channel === this.channel
       );
-      setTimeout(() => this.scrollToBottom(true), 50);
+
+      // Auto-scroll only if the user is near the bottom
+      if (this.isAtBottom) {
+        setTimeout(() => this.scrollToBottom(true), 50);
+      }
     });
   }
 
@@ -93,14 +103,41 @@ export class ChatComponent implements OnInit, OnChanges, OnDestroy {
     }
   }
 
+  /** 🧭 Detect scroll position to allow loading older messages */
+  @HostListener('scroll', ['$event'])
+  onScroll(event: Event) {
+    const el = this.chatWindow?.nativeElement;
+    if (!el) return;
+
+    const atTop = el.scrollTop === 0;
+    const atBottom =
+      el.scrollHeight - el.scrollTop - el.clientHeight < 100;
+
+    this.isAtBottom = atBottom;
+
+    // Simulate loading older messages when near top
+    if (atTop && !this.loadingOlder) {
+      this.loadingOlder = true;
+      this.loadOlderMessages();
+    }
+  }
+
+  /** 📜 Load older messages (simulated) */
+  private async loadOlderMessages() {
+    // TODO: You can expand this to fetch older messages from server later
+    console.log('Loading older messages...');
+    setTimeout(() => {
+      this.loadingOlder = false;
+    }, 500);
+  }
+
+  /** 📍 Smooth scroll to bottom */
   private scrollToBottom(force = false) {
     const el = this.chatWindow?.nativeElement;
     if (!el) return;
 
-    const threshold = 120;
-    const atBottom = el.scrollHeight - el.scrollTop - el.clientHeight <= threshold;
-    if (force || atBottom) {
-      requestAnimationFrame(() => (el.scrollTop = el.scrollHeight));
-    }
+    requestAnimationFrame(() => {
+      el.scrollTop = el.scrollHeight;
+    });
   }
 }

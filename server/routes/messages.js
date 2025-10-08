@@ -1,46 +1,71 @@
-const express = require('express');
-const router = express.Router();
-const path = require('path');
-const multer = require('multer');
-const { getDb } = require('../db');
+// server/routes/messages.js
+import express from "express";
+import path from "path";
+import multer from "multer";
+import { fileURLToPath } from "url";
+import { getDb } from "../db.js";
+import fs from "fs";
 
-// History REST (optional if you prefer sockets only)
-router.get('/', async (req, res) => {
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+const router = express.Router();
+
+// ---------------------------------------------------------
+// 💬 Get recent chat history
+// ---------------------------------------------------------
+router.get("/", async (req, res) => {
   const { groupId, channel, limit = 50 } = req.query;
   const q = { groupId, channel };
-  const docs = await getDb().collection('messages')
-    .find(q).sort({ timestamp: -1 }).limit(Number(limit)).toArray();
+  const docs = await getDb()
+    .collection("messages")
+    .find(q)
+    .sort({ timestamp: -1 })
+    .limit(Number(limit))
+    .toArray();
   res.json(docs.reverse());
 });
 
-/** Multer setups */
+// ---------------------------------------------------------
+// 🖼️ Upload Setup (avatars & images)
+// ---------------------------------------------------------
+const uploadRoot = path.join(__dirname, "..", "uploads");
+const avatarDir = path.join(uploadRoot, "avatars");
+const imageDir = path.join(uploadRoot, "images");
+[avatarDir, imageDir].forEach((d) => fs.mkdirSync(d, { recursive: true }));
+
 const avatarStorage = multer.diskStorage({
-  destination: path.join(__dirname, '..', 'uploads', 'avatars'),
-  filename: (_, file, cb) => cb(null, Date.now() + '-' + file.originalname)
+  destination: avatarDir,
+  filename: (_, file, cb) => cb(null, Date.now() + "-" + file.originalname),
 });
 const imageStorage = multer.diskStorage({
-  destination: path.join(__dirname, '..', 'uploads', 'images'),
-  filename: (_, file, cb) => cb(null, Date.now() + '-' + file.originalname)
+  destination: imageDir,
+  filename: (_, file, cb) => cb(null, Date.now() + "-" + file.originalname),
 });
 
 const avatarUpload = multer({ storage: avatarStorage });
 const imageUpload = multer({ storage: imageStorage });
 
-/** Upload avatar: returns public URL */
-router.post('/upload/avatar', avatarUpload.single('avatar'), async (req, res) => {
+// ---------------------------------------------------------
+// 👤 Upload Avatar
+// ---------------------------------------------------------
+router.post("/upload/avatar", avatarUpload.single("avatar"), async (req, res) => {
   const username = req.body.username;
   const url = `/uploads/avatars/${req.file.filename}`;
-  await getDb().collection('users').updateOne(
+  await getDb().collection("users").updateOne(
     { username },
-    { $set: { avatarUrl: url } }
+    { $set: { avatarUrl: url } },
+    { upsert: true }
   );
   res.json({ url });
 });
 
-/** Upload chat image: returns public URL for message */
-router.post('/upload/image', imageUpload.single('image'), async (req, res) => {
+// ---------------------------------------------------------
+// 🖼️ Upload Chat Image
+// ---------------------------------------------------------
+router.post("/upload/image", imageUpload.single("image"), async (req, res) => {
   const url = `/uploads/images/${req.file.filename}`;
   res.json({ url });
 });
 
-module.exports = router;
+export default router;
