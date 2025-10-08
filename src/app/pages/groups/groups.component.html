@@ -1,158 +1,81 @@
-<div class="card">
-  <div class="toolbar">
-    <h2>Groups</h2>
-    <div class="muted" *ngIf="!canManage()">
-      You can join or leave groups below.
-    </div>
+<div class="groups-container">
+  <h2>Groups</h2>
+
+  <!-- ✅ Create New Group -->
+  <div *ngIf="canManage()" class="create-group">
+    <input [(ngModel)]="name" placeholder="New group name" />
+    <button (click)="create()">Create</button>
   </div>
 
-  <!-- Group creation + management -->
-  <div class="row grid-2">
-    <!-- LEFT PANEL: Admin Tools -->
-    <div *ngIf="canManage()">
-      <h3>Create Group</h3>
-      <label>Name</label>
-      <input [(ngModel)]="name" placeholder="Group name" />
-      <button (click)="create()">Create</button>
+  <!-- ✅ Group List -->
+  <select [(ngModel)]="selectedId">
+    <option *ngFor="let g of list" [value]="g._id!">{{ g.name }}</option>
+  </select>
 
-      <h3 style="margin-top:18px">Add Channel</h3>
-      <label>Choose Group</label>
-      <select [(ngModel)]="selectedId">
-        <option *ngFor="let g of list" [value]="g.id">{{ g.name }}</option>
-      </select>
-      <label>Channel name</label>
-      <input [(ngModel)]="channel" placeholder="Channel name" />
-      <button (click)="addChannel()">Add Channel</button>
-    </div>
+  <button *ngIf="selectedId && canManage()" (click)="addChannel()">Add Channel</button>
+  <input *ngIf="selectedId && canManage()" [(ngModel)]="channel" placeholder="New channel name" />
 
-    <!-- RIGHT PANEL: Group Listing -->
+  <ul>
+    <li *ngFor="let g of list">
+      <h3>{{ g.name }}</h3>
+      <p>Owner: {{ g.ownerUsername }}</p>
+
+      <!-- ✅ Channels -->
+      <div *ngIf="g.channels.length">
+        <b>Channels:</b>
+        <ul>
+          <li *ngFor="let ch of g.channels">
+            {{ ch }}
+            <button *ngIf="canManageGroup(g)" (click)="removeChannel(g, ch)">🗑️</button>
+          </li>
+        </ul>
+      </div>
+
+      <!-- ✅ Members -->
+      <div *ngIf="g.members.length">
+        <b>Members:</b>
+        <ul>
+          <li *ngFor="let m of g.members">{{ m }}</li>
+        </ul>
+      </div>
+
+      <!-- ✅ Join / Leave / Delete -->
+      <div>
+        <button *ngIf="!isMember(g) && !hasRequested(g)" (click)="request(g._id!)">Join</button>
+        <button *ngIf="hasRequested(g)" disabled>Requested</button>
+        <button *ngIf="isMember(g)" (click)="leave(g._id!)">Leave</button>
+        <button *ngIf="canManageGroup(g)" (click)="remove(g._id!)">Delete</button>
+        <button *ngIf="isMember(g)" (click)="openGroup(g)">Open Chat</button>
+      </div>
+    </li>
+  </ul>
+
+  <!-- ✅ Active Group Chat -->
+  <div *ngIf="activeGroup">
+    <h2>{{ activeGroup.name }} — Chat</h2>
+
     <div>
-      <h3>Existing Groups</h3>
-      <table class="table">
-        <thead>
-          <tr>
-            <th>Name</th>
-            <th>Owner</th>
-            <th>Channels</th>
-            <th>Members</th>
-            <th>Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr *ngFor="let g of list">
-            <td>{{ g.name }}</td>
-            <td>{{ g.ownerUsername }}</td>
-            <td>
-              <ul class="channel-list-inline">
-                <li *ngFor="let ch of g.channels">
-                  <span class="channel-btn">#{{ ch }}</span>
-                  <button
-                    *ngIf="canManageGroup(g)"
-                    (click)="removeChannel(g, ch)"
-                    class="small-btn danger"
-                  >
-                    ✖
-                  </button>
-                </li>
-              </ul>
-            </td>
-            <td>{{ g.members.length }}</td>
-            <td>
-              <ng-container *ngIf="canManageGroup(g); else userActions">
-                <button (click)="openGroup(g)">Open</button>
-                <button (click)="remove(g.id)">Delete</button>
-              </ng-container>
-
-              <ng-template #userActions>
-                <button
-                  *ngIf="!isMember(g) && !hasRequested(g)"
-                  (click)="request(g.id)"
-                >
-                  Request
-                </button>
-                <button *ngIf="isMember(g)" (click)="openGroup(g)">Open</button>
-                <button *ngIf="isMember(g)" (click)="leave(g.id)">Leave</button>
-                <button *ngIf="hasRequested(g)" disabled>Requested</button>
-              </ng-template>
-            </td>
-          </tr>
-        </tbody>
-      </table>
+      <label>Channel:</label>
+      <select [(ngModel)]="activeChannel">
+        <option *ngFor="let ch of activeGroup.channels" [value]="ch">{{ ch }}</option>
+      </select>
     </div>
-  </div>
 
-  <!-- ACTIVE GROUP + CHANNEL CHAT SECTION -->
-  <div *ngIf="activeGroup" class="group-layout">
-    <!-- Sidebar for Channels -->
-    <div class="sidebar">
-      <h3>{{ activeGroup.name }}</h3>
-      <ul class="channel-list">
-        <li
-          *ngFor="let c of activeGroup.channels"
-          [class.active]="activeChannel === c"
-          (click)="selectChannel(c)"
-        >
-          <span class="channel-btn">#{{ c }}</span>
+    <app-chat
+      [groupId]="activeGroup._id || ''"
+      [channel]="activeChannel || ''"
+    ></app-chat>
+
+    <!-- ✅ Join Requests Section -->
+    <div *ngIf="canManageGroup(activeGroup)">
+      <h3>Join Requests</h3>
+      <ul>
+        <li *ngFor="let r of activeGroup.joinRequests">
+          {{ r }}
+          <button (click)="approveJoin(activeGroup._id!, r)">Approve</button>
+          <button (click)="rejectJoinRequest(activeGroup._id!, r)">Reject</button>
         </li>
       </ul>
-    </div>
-
-    <!-- Chat Section -->
-    <div class="main" *ngIf="activeChannel">
-      <app-chat
-        [groupId]="activeGroup.id"
-        [channel]="activeChannel"
-      ></app-chat>
-
-      <!-- Member Management (Group Admin Only) -->
-      <div *ngIf="canManageGroup(activeGroup)" class="member-panel">
-        <h4>Members</h4>
-        <ul>
-          <li *ngFor="let m of activeGroup.members">
-            {{ m }}
-            <button
-              class="small-btn"
-              (click)="removeUser(activeGroup, m)"
-              title="Remove from group"
-            >
-              Remove
-            </button>
-            <button
-              class="small-btn danger"
-              (click)="banUser(activeGroup, activeChannel!, m)"
-              title="Ban from channel"
-            >
-              Ban
-            </button>
-          </li>
-        </ul>
-
-        <!-- 📨 JOIN REQUESTS (visible to Group Admins & Super Admins) -->
-        <h4>Join Requests</h4>
-        <ul *ngIf="activeGroup.joinRequests.length; else noRequests">
-          <li *ngFor="let r of activeGroup.joinRequests">
-            {{ r }}
-            <button
-              class="small-btn success"
-              (click)="approveJoinRequest(activeGroup.id, r)"
-              title="Approve request"
-            >
-              Approve
-            </button>
-            <button
-              class="small-btn danger"
-              (click)="rejectJoinRequest(activeGroup.id, r)"
-              title="Reject request"
-            >
-              Reject
-            </button>
-          </li>
-        </ul>
-
-        <ng-template #noRequests>
-          <p class="muted">No pending join requests.</p>
-        </ng-template>
-      </div>
     </div>
   </div>
 </div>
