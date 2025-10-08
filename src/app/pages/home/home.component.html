@@ -1,0 +1,15 @@
+<div class="home-container">
+  <h1>👋 Welcome to Yappers!</h1>
+
+  <p>
+    Manage your groups, users, and channels, or join the conversation in real-time.
+  </p>
+
+  <div *ngIf="!auth.isLoggedIn()">
+    <a routerLink="/login" class="btn">Login</a>
+  </div>
+
+  <div *ngIf="auth.isLoggedIn()">
+    <a routerLink="/groups" class="btn">Go to Groups</a>
+  </div>
+</div>

@@ -1,0 +1,24 @@
+.role-badge {
+  padding: 4px 8px;
+  border-radius: 6px;
+  margin-right: 4px;
+  font-size: 0.8em;
+  color: white;
+}
+
+.badge-super {
+  background: purple;
+}
+
+.badge-group {
+  background: dodgerblue;
+}
+
+.badge-user {
+  background: gray;
+}
+
+button {
+  margin-right: 5px;
+  padding: 4px 8px;
+}
