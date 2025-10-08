@@ -3,7 +3,6 @@ import { FormsModule } from '@angular/forms';
 import { NgFor, NgIf } from '@angular/common';
 import { AuthService } from '../../services/auth.service';
 import { GroupService, Group } from '../../services/group.service';
-import { UserService } from '../../services/user.service';
 import { ChatComponent } from '../chat/chat.component';
 
 @Component({
@@ -21,36 +20,16 @@ export class GroupsComponent {
   activeGroup: Group | null = null;
   activeChannel: string | null = null;
 
-  constructor(
-    public auth: AuthService,
-    private groups: GroupService,
-    private users: UserService
-  ) {
+  constructor(public auth: AuthService, private groups: GroupService) {
     this.refresh();
   }
 
-  /** 🔄 Refresh group list */
-  refresh() {
-    const all = this.groups.list();
-    const role = this.auth.role();
-    const username = this.auth.username();
-
-    if (role === 'super-admin') {
-      this.list = all;
-    } else if (role === 'group-admin') {
-      this.list = all.filter(g => g.ownerUsername === username);
-    } else {
-      this.list = all;
-    }
-
-    // Keep active group updated
-    if (this.activeGroup) {
-      const updated = this.list.find(g => g.id === this.activeGroup?.id);
-      this.activeGroup = updated || null;
-    }
+  /** 🔄 Load groups from MongoDB */
+  async refresh() {
+    this.list = await this.groups.list();
   }
 
-  /** ✅ Can manage any groups */
+  /** ✅ Can manage any group */
   canManage(): boolean {
     const role = this.auth.role();
     return role === 'super-admin' || role === 'group-admin';
@@ -63,119 +42,101 @@ export class GroupsComponent {
     return role === 'super-admin' || g.ownerUsername === username;
   }
 
-  /** ➕ Create a new group */
-  create() {
+  /** ➕ Create new group */
+  async create() {
     const name = this.name.trim();
     if (!name) return alert('Enter a group name');
     const owner = this.auth.username();
     if (!owner) return alert('You must be logged in.');
 
-    this.groups.create({
-      id: crypto.randomUUID(),
-      name,
-      ownerUsername: owner,
-      channels: ['General'],
-      members: [owner],
-      joinRequests: []
-    });
-
+    await this.groups.create(name, owner);
     this.name = '';
-    this.refresh();
+    await this.refresh();
   }
 
   /** ➕ Add channel */
-  addChannel() {
+  async addChannel() {
     if (!this.selectedId || !this.channel.trim()) return;
-    this.groups.addChannel(this.selectedId, this.channel.trim());
+    await this.groups.addChannel(this.selectedId, this.channel.trim());
     this.channel = '';
-    this.refresh();
+    await this.refresh();
   }
 
-  /** ➖ Remove channel */
+  /** (optional) 🧹 Remove channel placeholder */
   removeChannel(g: Group, channel: string) {
-    if (!confirm(`Remove channel "${channel}" from ${g.name}?`)) return;
-    this.groups.removeChannel(g.id, channel, this.auth.username()!);
-    this.refresh();
+    alert(`Channel removal not yet implemented. (${channel} in ${g.name})`);
   }
 
-  /** 👤 Is user member of group */
+  /** 👤 Check membership */
   isMember(g: Group): boolean {
     const user = this.auth.username();
     return g.members.includes(user ?? '');
   }
 
-  /** 📨 Has user requested join */
+  /** 📨 Has user requested */
   hasRequested(g: Group): boolean {
     const user = this.auth.username();
     return g.joinRequests.includes(user ?? '');
   }
 
-  /** 📨 Request join */
-  request(groupId: string) {
+  /** 📨 Request to join */
+  async request(groupId: string) {
     const user = this.auth.username();
     if (!user) return;
-    this.users.requestGroup(user, groupId);
-    this.groups.addJoinRequest(groupId, user);
-    this.refresh();
+    await this.groups.requestJoin(groupId, user);
+    await this.refresh();
+  }
+
+  /** ✅ Approve join */
+  async approveJoin(groupId: string, username: string) {
+    await this.groups.approveJoin(groupId, username);
+    alert(`${username} has been approved.`);
+    await this.refresh();
+  }
+
+  /** ❌ Reject join (local only for now) */
+  rejectJoinRequest(groupId: string, username: string) {
+    const g = this.list.find(x => x._id === groupId);
+    if (!g) return;
+    g.joinRequests = g.joinRequests.filter(u => u !== username);
+    alert(`${username}'s request has been rejected.`);
   }
 
   /** 🚪 Leave group */
-  leave(groupId: string) {
+  async leave(groupId: string) {
     const user = this.auth.username();
     if (!user) return;
-    this.users.leaveGroup(user, groupId);
-    this.groups.removeMember(groupId, user);
-    this.refresh();
-  }
-
-  /** ✅ Approve a user's join request */
-  approveJoinRequest(groupId: string, username: string) {
-    this.groups.approveJoinRequest(groupId, username);
-    alert(`${username} has been approved to join this group.`);
-    this.refresh();
-  }
-
-  /** ❌ Reject a user's join request */
-  rejectJoinRequest(groupId: string, username: string) {
-    const groups = this.groups.list();
-    const g = groups.find(x => x.id === groupId);
-    if (!g) return;
-
-    g.joinRequests = g.joinRequests.filter(u => u !== username);
-    localStorage.setItem('groups', JSON.stringify(groups));
-    alert(`${username}'s request has been rejected.`);
-    this.refresh();
+    await this.groups.removeMember(groupId, user);
+    await this.refresh();
   }
 
   /** 🗑️ Delete group */
-  remove(id: string) {
+  async remove(id: string) {
     if (!confirm('Delete this group?')) return;
-    this.groups.removeGroup(id, this.auth.username()!);
-    this.refresh();
+    await this.groups.remove(id);
+    await this.refresh();
   }
 
   /** 🚫 Remove user from group */
-  removeUser(g: Group, username: string) {
+  async removeUser(g: Group, username: string) {
     if (!confirm(`Remove ${username} from ${g.name}?`)) return;
-    this.groups.removeMember(g.id, username);
-    this.refresh();
+    await this.groups.removeMember(g._id!, username);
+    await this.refresh();
   }
 
-  /** 🚷 Ban user from a channel */
-  banUser(g: Group, channel: string, username: string) {
-    const reason = prompt(`Enter reason for banning ${username} from ${channel}:`);
+  /** 🚷 Ban user */
+  async banUser(g: Group, channel: string, username: string) {
+    const reason = prompt(`Reason for banning ${username} from ${channel}?`);
     if (!reason) return;
-    this.groups.banUserFromChannel(g.id, channel, username, reason, this.auth.username()!);
-    alert(`${username} has been banned from ${channel}. Report sent to Super Admins.`);
+    await this.groups.banUserFromChannel(g._id!, channel, username, reason, this.auth.username()!);
+    alert(`${username} has been banned.`);
   }
 
-  /** 🧭 Open selected group + first channel */
+  /** 🧭 Open group */
   openGroup(g: Group) {
     const user = this.auth.username();
-
-    // 🚫 Prevent non-members from opening chat
     if (!this.isMember(g)) {
-      alert('You must be approved by a group admin to access this chat.');
+      alert('You must be approved to access this chat.');
       return;
     }
 
@@ -183,7 +144,7 @@ export class GroupsComponent {
     this.activeChannel = g.channels[0] || null;
   }
 
-  /** 🔀 Switch between channels */
+  /** 🔀 Switch channels */
   selectChannel(channel: string) {
     this.activeChannel = channel;
   }

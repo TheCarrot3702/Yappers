@@ -1,0 +1,38 @@
+<div class="video-card">
+  <div class="header">
+    <h2>Video Chat</h2>
+    <div class="status">{{ status }}</div>
+  </div>
+
+  <div class="videos">
+    <div class="video-pane">
+      <div class="label">You</div>
+      <video #localVideo playsinline></video>
+    </div>
+    <div class="video-pane">
+      <div class="label">Partner</div>
+      <video #remoteVideo playsinline></video>
+    </div>
+  </div>
+
+  <div class="controls">
+    <div class="row">
+      <div class="me">
+        <div class="id-line">
+          <span>Your ID:</span>
+          <code>{{ myId || '...' }}</code>
+          <button (click)="copyMyId()" [disabled]="!myId">Copy</button>
+        </div>
+        <button (click)="startCamera()">Start Camera</button>
+        <button (click)="toggleMic()" [disabled]="!localStream">{{ micOn ? 'Mute' : 'Unmute' }}</button>
+        <button (click)="toggleCam()" [disabled]="!localStream">{{ camOn ? 'Camera Off' : 'Camera On' }}</button>
+      </div>
+
+      <div class="partner">
+        <input [(ngModel)]="otherId" placeholder="Partner ID" />
+        <button (click)="call()" [disabled]="!myId">Call</button>
+        <button class="danger" (click)="hangup()">Hang up</button>
+      </div>
+    </div>
+  </div>
+</div>

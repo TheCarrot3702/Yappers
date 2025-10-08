@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 
 export interface Group {
-  id: string;
+  _id?: string;
   name: string;
   ownerUsername: string;
   channels: string[];
@@ -11,120 +11,84 @@ export interface Group {
 
 @Injectable({ providedIn: 'root' })
 export class GroupService {
-  private key = 'groups';
+  private base = 'http://localhost:3000/api/groups';
 
-  /** Load from localStorage, with normalization */
-  private load(): Group[] {
-    const raw = localStorage.getItem(this.key);
-    if (!raw) return [];
-    try {
-      const list = JSON.parse(raw);
-      return Array.isArray(list)
-        ? list.map((g: any) => ({
-            id: g.id ?? crypto.randomUUID(),
-            name: g.name ?? '(Unnamed)',
-            ownerUsername: g.ownerUsername ?? 'unknown',
-            channels: Array.isArray(g.channels) ? g.channels : ['General'],
-            members: Array.isArray(g.members) ? g.members : [],
-            joinRequests: Array.isArray(g.joinRequests) ? g.joinRequests : [],
-          }))
-        : [];
-    } catch {
-      return [];
-    }
+  /** 🧾 Get all groups */
+  async list(): Promise<Group[]> {
+    const res = await fetch(this.base);
+    return res.json();
   }
 
-  /** Save back to localStorage */
-  private save(groups: Group[]) {
-    localStorage.setItem(this.key, JSON.stringify(groups));
+  /** ➕ Create new group */
+  async create(name: string, ownerUsername: string): Promise<Group> {
+    const res = await fetch(this.base, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name, ownerUsername }),
+    });
+    return res.json();
   }
 
-  /** List all groups */
-  list(): Group[] {
-    return this.load();
+  /** ➕ Add channel to group */
+  async addChannel(groupId: string, name: string): Promise<void> {
+    await fetch(`${this.base}/${groupId}/channels`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name }),
+    });
   }
 
-  /** Create a new group (expects a full Group object) */
-  create(g: Group) {
-    const groups = this.load();
-    groups.push(g);
-    this.save(groups);
+  /** 📨 Request to join group */
+  async requestJoin(groupId: string, username: string): Promise<void> {
+    await fetch(`${this.base}/${groupId}/request`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username }),
+    });
   }
 
-  /** Remove a group (super-admin or owner only) */
-  removeGroup(id: string, requester: string) {
-    const groups = this.load();
-    const filtered = groups.filter(
-      (g) =>
-        g.id !== id &&
-        (g.ownerUsername === requester || requester === 'super' || requester === 'super-admin')
-    );
-    this.save(filtered);
+  /** ✅ Approve join request */
+  async approveJoin(groupId: string, username: string): Promise<void> {
+    await fetch(`${this.base}/${groupId}/approve`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username }),
+    });
   }
 
-  /** Add new channel to group */
-  addChannel(groupId: string, channel: string) {
-    const groups = this.load();
-    const g = groups.find((x) => x.id === groupId);
-    if (g && !g.channels.includes(channel)) g.channels.push(channel);
-    this.save(groups);
+  /** 🚫 Remove member */
+  async removeMember(groupId: string, username: string): Promise<void> {
+    await fetch(`${this.base}/${groupId}/leave`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username }),
+    });
   }
 
-  /** Remove a channel (admin only) */
-  removeChannel(groupId: string, channel: string, requester: string) {
-    const groups = this.load();
-    const g = groups.find((x) => x.id === groupId);
-    if (!g) return;
-    if (g.ownerUsername !== requester && requester !== 'super-admin') return;
-    g.channels = g.channels.filter((c) => c !== channel);
-    this.save(groups);
+  /** 🧹 Delete group */
+  async remove(groupId: string): Promise<void> {
+    await fetch(`${this.base}/${groupId}`, { method: 'DELETE' });
   }
 
-  /** Add a join request */
-  addJoinRequest(groupId: string, username: string) {
-    const groups = this.load();
-    const g = groups.find((x) => x.id === groupId);
-    if (g && !g.joinRequests.includes(username)) g.joinRequests.push(username);
-    this.save(groups);
+  /** 🚫 Remove channel (not required but added for completeness) */
+  async removeChannel(groupId: string, channelName: string): Promise<void> {
+    await fetch(`${this.base}/${groupId}/channels/remove`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name: channelName }),
+    });
   }
 
-  /** ✅ Approve a join request */
-  approveJoinRequest(groupId: string, username: string) {
-    const groups = this.load();
-    const g = groups.find((x) => x.id === groupId);
-    if (!g) return;
-    g.joinRequests = g.joinRequests.filter((u) => u !== username);
-    if (!g.members.includes(username)) g.members.push(username);
-    this.save(groups);
-  }
-
-  /** ❌ Reject a join request */
-  rejectJoinRequest(groupId: string, username: string) {
-    const groups = this.load();
-    const g = groups.find((x) => x.id === groupId);
-    if (!g) return;
-    g.joinRequests = g.joinRequests.filter((u) => u !== username);
-    this.save(groups);
-  }
-
-  /** Remove a member */
-  removeMember(groupId: string, username: string) {
-    const groups = this.load();
-    const g = groups.find((x) => x.id === groupId);
-    if (!g) return;
-    g.members = g.members.filter((u) => u !== username);
-    this.save(groups);
-  }
-
-  /** Ban user from a specific channel (optional logic) */
-  banUserFromChannel(
+  /** 🚷 Ban user placeholder (you can expand later) */
+  async banUserFromChannel(
     groupId: string,
     channel: string,
     username: string,
     reason: string,
-    requester: string
-  ) {
-    // For now, just log or send to super-admin inbox later
-    console.warn(`User "${username}" banned from ${channel} in ${groupId}: ${reason}`);
+    by: string
+  ): Promise<void> {
+    console.warn(
+      `🚷 Ban requested: ${username} from ${channel} (group ${groupId}) by ${by}: ${reason}`
+    );
   }
 }

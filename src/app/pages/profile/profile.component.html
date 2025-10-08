@@ -1,0 +1,33 @@
+<div class="card profile-card">
+  <h2>Profile</h2>
+
+  <div *ngIf="user; else noUser">
+    <div class="profile-info">
+      <img
+        *ngIf="user.avatarUrl; else defaultAvatar"
+        [src]="user.avatarUrl"
+        alt="Avatar"
+        class="avatar-preview"
+      />
+      <ng-template #defaultAvatar>
+        <div class="avatar-placeholder">👤</div>
+      </ng-template>
+
+      <div>
+        <p><strong>Username:</strong> {{ user.username }}</p>
+        <p><strong>Role:</strong> {{ user.role }}</p>
+      </div>
+    </div>
+
+    <div class="upload-section">
+      <label class="upload-btn">
+        <input type="file" (change)="onFileSelected($event)" accept="image/*" />
+        {{ uploading ? 'Uploading...' : 'Upload New Avatar' }}
+      </label>
+    </div>
+  </div>
+
+  <ng-template #noUser>
+    <p>Please log in to view your profile.</p>
+  </ng-template>
+</div>

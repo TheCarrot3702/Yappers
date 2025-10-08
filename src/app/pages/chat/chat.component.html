@@ -1,28 +1,64 @@
-<div class="chat-window" #chatWindow>
-  <div
-    *ngFor="let m of messages"
-    [ngClass]="{
-      'message self': m.username === auth.username(),
-      'message other': m.username !== auth.username()
-    }"
-  >
-    <div class="meta">
-      <span class="username">
-        {{ m.username === auth.username() ? 'You' : m.username }}
-      </span>
-      <span class="time">{{ m.timestamp | date: 'shortTime' }}</span>
-    </div>
-    <div class="bubble">{{ m.message }}</div>
-  </div>
-</div>
+<div class="chat-container">
+  <!-- Chat messages window -->
+  <div #chatWindow class="chat-window">
+    <div *ngFor="let m of messages" class="message-row">
+      <!-- 🟡 System Messages (Join / Leave) -->
+      <div *ngIf="m.type === 'system'" class="system-message">
+        <em>{{ m.message }}</em>
+      </div>
 
-<div class="chat-input">
-  <!-- ✅ Make sure the input tag is properly closed -->
-  <input
-    [(ngModel)]="newMessage"
-    placeholder="Type a message..."
-    class="chat-textbox"
-    (keyup.enter)="sendMessage()"
-  />
-  <button (click)="sendMessage()" class="chat-button">Send</button>
+      <!-- 🟢 Regular Text Messages -->
+      <div *ngIf="m.type === 'text'" class="message-bubble">
+        <img
+          *ngIf="m.avatarUrl"
+          [src]="m.avatarUrl"
+          alt="avatar"
+          class="avatar"
+        />
+        <div class="message-content">
+          <div class="message-header">
+            <b>{{ m.username }}</b>
+            <span class="timestamp">{{ m.timestamp | date: 'shortTime' }}</span>
+          </div>
+          <div class="message-body">{{ m.message }}</div>
+        </div>
+      </div>
+
+      <!-- 🖼️ Image Messages -->
+      <div *ngIf="m.type === 'image'" class="message-bubble">
+        <img
+          *ngIf="m.avatarUrl"
+          [src]="m.avatarUrl"
+          alt="avatar"
+          class="avatar"
+        />
+        <div class="message-content">
+          <div class="message-header">
+            <b>{{ m.username }}</b>
+            <span class="timestamp">{{ m.timestamp | date: 'shortTime' }}</span>
+          </div>
+          <div class="message-body">
+            <img [src]="m.imageUrl" class="chat-image" alt="sent image" />
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Input area -->
+  <div class="chat-input">
+    <input
+      type="text"
+      [(ngModel)]="newMessage"
+      placeholder="Type a message..."
+      (keyup.enter)="sendMessage()"
+    />
+
+    <label class="upload-btn" title="Send image">
+      📎
+      <input type="file" accept="image/*" (change)="onPickImage($event)" hidden />
+    </label>
+
+    <button (click)="sendMessage()">Send</button>
+  </div>
 </div>
