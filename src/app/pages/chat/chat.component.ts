@@ -39,22 +39,24 @@ export class ChatComponent implements OnInit, OnChanges, OnDestroy {
     private upload: UploadService
   ) {}
 
+  // 🔹 Initialize and subscribe to chat messages
   ngOnInit() {
     this.joinIfPossible();
 
     this.chat.messages$.subscribe((msgs) => {
-      // Show only messages for this group/channel
+      // Only show messages from the current group & channel
       this.messages = msgs.filter(
         (m) => m.groupId === this.groupId && m.channel === this.channel
       );
 
-      // Auto-scroll only if the user is near the bottom
+      // Auto-scroll if user is near bottom
       if (this.isAtBottom) {
         setTimeout(() => this.scrollToBottom(true), 50);
       }
     });
   }
 
+  // 🔹 Rejoin channel when group or channel input changes
   ngOnChanges(changes: SimpleChanges) {
     if (
       (changes['channel'] && !changes['channel'].firstChange) ||
@@ -64,6 +66,7 @@ export class ChatComponent implements OnInit, OnChanges, OnDestroy {
     }
   }
 
+  // 🔹 Leave channel when component is destroyed
   ngOnDestroy() {
     const username = this.auth.username();
     if (username && this.channel) {
@@ -71,6 +74,7 @@ export class ChatComponent implements OnInit, OnChanges, OnDestroy {
     }
   }
 
+  /** 🔸 Join the channel if info available */
   private joinIfPossible(rejoin = false) {
     const username = this.auth.username();
     if (!username || !this.channel || !this.groupId) return;
@@ -79,6 +83,7 @@ export class ChatComponent implements OnInit, OnChanges, OnDestroy {
     this.chat.joinChannel(this.groupId, this.channel, username);
   }
 
+  /** ✉️ Send a text message */
   sendMessage() {
     const text = this.newMessage.trim();
     const username = this.auth.username();
@@ -88,6 +93,7 @@ export class ChatComponent implements OnInit, OnChanges, OnDestroy {
     this.newMessage = '';
   }
 
+  /** 🖼️ Send image after upload */
   async onPickImage(ev: Event) {
     const input = ev.target as HTMLInputElement;
     const file = input?.files?.[0];
@@ -103,15 +109,14 @@ export class ChatComponent implements OnInit, OnChanges, OnDestroy {
     }
   }
 
-  /** 🧭 Detect scroll position to allow loading older messages */
+  /** 🧭 Detect scroll position for lazy loading */
   @HostListener('scroll', ['$event'])
   onScroll(event: Event) {
     const el = this.chatWindow?.nativeElement;
     if (!el) return;
 
     const atTop = el.scrollTop === 0;
-    const atBottom =
-      el.scrollHeight - el.scrollTop - el.clientHeight < 100;
+    const atBottom = el.scrollHeight - el.scrollTop - el.clientHeight < 100;
 
     this.isAtBottom = atBottom;
 
@@ -122,9 +127,8 @@ export class ChatComponent implements OnInit, OnChanges, OnDestroy {
     }
   }
 
-  /** 📜 Load older messages (simulated) */
+  /** 🕓 Simulated load of older messages */
   private async loadOlderMessages() {
-    // TODO: You can expand this to fetch older messages from server later
     console.log('Loading older messages...');
     setTimeout(() => {
       this.loadingOlder = false;

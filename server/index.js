@@ -13,6 +13,7 @@ import { connectMongo, getDb } from "./db.js";
 import usersRouter from "./routes/users.js";
 import groupsRouter from "./routes/groups.js";
 import messagesRouter from "./routes/messages.js";
+import groupRoutes from "./routes/groups.js";
 
 dotenv.config();
 
@@ -51,6 +52,7 @@ const avatarDir = path.join(uploadRoot, "avatars");
 
 app.use("/uploads/chat", express.static(chatDir));
 app.use("/uploads/avatars", express.static(avatarDir));
+app.use("/api/groups", groupRoutes);
 
 const chatStorage = multer.diskStorage({
   destination: (_, __, cb) => cb(null, chatDir),

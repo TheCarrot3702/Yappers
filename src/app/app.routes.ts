@@ -19,7 +19,7 @@ export const routes: Routes = [
       { path: '', redirectTo: 'home', pathMatch: 'full' },
       { path: 'home', component: HomeComponent },
       { path: 'users', component: UsersComponent },
-      { path: 'groups', component: GroupsComponent },
+      { path: 'groups',  component: GroupsComponent, canActivate: [authGuard] },
       { path: 'profile', component: ProfileComponent },
       { path: 'video', component: VideosComponent },
     ]

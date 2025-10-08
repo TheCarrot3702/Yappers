@@ -4,11 +4,11 @@
   "description": "Backend server for Yappers chat and video app",
   "main": "server/index.js",
   "type": "module",
-"scripts": {
-  "start": "node index.js",
-  "dev": "nodemon index.js",
-  "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js --detectOpenHandles"
-},
+  "scripts": {
+    "start": "node index.js",
+    "dev": "nodemon index.js",
+    "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js --detectOpenHandles"
+  },
   "dependencies": {
     "cors": "^2.8.5",
     "dotenv": "^17.2.3",

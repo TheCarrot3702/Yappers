@@ -1,7 +1,10 @@
 import { Injectable } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { firstValueFrom } from 'rxjs';
 
+/** 🧩 Group model — matches your MongoDB schema */
 export interface Group {
-  _id?: string;
+  _id: string;
   name: string;
   ownerUsername: string;
   channels: string[];
@@ -11,64 +14,140 @@ export interface Group {
 
 @Injectable({ providedIn: 'root' })
 export class GroupService {
-  private base = 'http://localhost:3000/api/groups';
+  /** Adjust to your backend URL if needed */
+  private readonly baseUrl = 'http://localhost:3000/api/groups';
 
+  constructor(private http: HttpClient) {}
+
+  /** 🔹 Fetch all groups */
   async list(): Promise<Group[]> {
-    const res = await fetch(this.base);
-    return await res.json();
+    try {
+      const res = await firstValueFrom(this.http.get<Group[]>(this.baseUrl));
+      return res ?? [];
+    } catch (err) {
+      console.error('❌ Failed to fetch groups:', err);
+      return [];
+    }
   }
 
-  async create(name: string, ownerUsername: string) {
-    await fetch(this.base, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name, ownerUsername }),
-    });
+  /** 🔹 Create a new group */
+  async create(name: string, ownerUsername: string): Promise<void> {
+    try {
+      await firstValueFrom(
+        this.http.post<void>(this.baseUrl, { name, ownerUsername })
+      );
+    } catch (err) {
+      console.error('❌ Failed to create group:', err);
+      throw err;
+    }
   }
 
-  async addChannel(groupId: string, channel: string) {
-    await fetch(`${this.base}/${groupId}/channels`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ channel }),
-    });
+  /** 🔹 Add a new channel */
+  async addChannel(groupId: string, channel: string): Promise<void> {
+    try {
+      await firstValueFrom(
+        this.http.post<void>(`${this.baseUrl}/${groupId}/channels`, { channel })
+      );
+    } catch (err) {
+      console.error('❌ Failed to add channel:', err);
+      throw err;
+    }
   }
 
-  async requestJoin(groupId: string, username: string) {
-    await fetch(`${this.base}/${groupId}/join`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ username }),
-    });
+  /** 🔹 Remove a channel */
+  async removeChannel(groupId: string, channel: string): Promise<void> {
+    try {
+      await firstValueFrom(
+        this.http.delete<void>(`${this.baseUrl}/${groupId}/channels/${channel}`)
+      );
+    } catch (err) {
+      console.error('❌ Failed to remove channel:', err);
+      throw err;
+    }
   }
 
-  async approveJoin(groupId: string, username: string) {
-    await fetch(`${this.base}/${groupId}/approve`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ username }),
-    });
+  /** 🔹 Request to join group */
+  async requestJoin(groupId: string, username: string): Promise<void> {
+    try {
+      await firstValueFrom(
+        this.http.post<void>(`${this.baseUrl}/${groupId}/request`, { username })
+      );
+    } catch (err) {
+      console.error('❌ Failed to request join:', err);
+      throw err;
+    }
   }
 
-  async remove(id: string) {
-    await fetch(`${this.base}/${id}`, { method: 'DELETE' });
+  /** 🔹 Approve join request */
+  async approveJoin(groupId: string, username: string): Promise<void> {
+    try {
+      await firstValueFrom(
+        this.http.post<void>(`${this.baseUrl}/${groupId}/approve`, { username })
+      );
+    } catch (err) {
+      console.error('❌ Failed to approve join:', err);
+      throw err;
+    }
   }
 
-  async removeMember(groupId: string, username: string) {
-    await fetch(`${this.base}/${groupId}/members/${username}`, { method: 'DELETE' });
+  /** 🔹 Reject join request */
+  async rejectJoin(groupId: string, username: string): Promise<void> {
+    try {
+      await firstValueFrom(
+        this.http.post<void>(`${this.baseUrl}/${groupId}/reject`, { username })
+      );
+    } catch (err) {
+      console.error('❌ Failed to reject join:', err);
+      throw err;
+    }
   }
 
+  /** 🔹 Remove a member from the group */
+  async removeMember(groupId: string, username: string): Promise<void> {
+    try {
+      await firstValueFrom(
+        this.http.post<void>(`${this.baseUrl}/${groupId}/remove-member`, {
+          username,
+        })
+      );
+    } catch (err) {
+      console.error('❌ Failed to remove member:', err);
+      throw err;
+    }
+  }
+
+  /** 🔹 Delete a group */
+  async remove(groupId: string): Promise<void> {
+    try {
+      await firstValueFrom(
+        this.http.delete<void>(`${this.baseUrl}/${groupId}`)
+      );
+    } catch (err) {
+      console.error('❌ Failed to delete group:', err);
+      throw err;
+    }
+  }
+
+  /** 🔹 Ban a user from a specific channel */
   async banUserFromChannel(
     groupId: string,
     channel: string,
     username: string,
     reason: string,
-    by: string
-  ) {
-    await fetch(`${this.base}/${groupId}/bans`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ channel, username, reason, by }),
-    });
+    bannedBy: string
+  ): Promise<void> {
+    try {
+      await firstValueFrom(
+        this.http.post<void>(`${this.baseUrl}/${groupId}/ban`, {
+          channel,
+          username,
+          reason,
+          bannedBy,
+        })
+      );
+    } catch (err) {
+      console.error('❌ Failed to ban user:', err);
+      throw err;
+    }
   }
 }

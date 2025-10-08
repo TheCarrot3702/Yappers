@@ -1,4 +1,6 @@
-/* === Chat container === */
+/* ======================================
+   🧩 CHAT CONTAINER & WINDOW
+====================================== */
 .chat-container {
   display: flex;
   flex-direction: column;
@@ -10,12 +12,17 @@
   border: 1px solid #ddd;
 }
 
-/* === Message list === */
+/* Scrollable chat area */
 .chat-window {
   flex: 1;
+  height: 400px;
   overflow-y: auto;
-  padding: 10px 16px;
+  padding: 12px 16px;
   background: #fff;
+  border-radius: 8px 8px 0 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
   scroll-behavior: smooth;
 }
 
@@ -23,19 +30,54 @@
 .chat-window::-webkit-scrollbar {
   width: 8px;
 }
+
 .chat-window::-webkit-scrollbar-thumb {
   background: #ccc;
   border-radius: 8px;
 }
 
-/* === Message Row === */
-.message-row {
-  margin-bottom: 10px;
-  display: flex;
-  align-items: flex-start;
+.chat-window::-webkit-scrollbar-thumb:hover {
+  background: #a0a0a0;
 }
 
-/* === System Message === */
+/* ======================================
+   💬 MESSAGE STYLES
+====================================== */
+.message-row {
+  display: flex;
+  align-items: flex-start;
+  margin-bottom: 10px;
+}
+
+.message {
+  max-width: 75%;
+  display: flex;
+  flex-direction: column;
+  padding: 4px 8px;
+}
+
+/* Align based on sender */
+.message.other {
+  align-self: flex-start;
+}
+
+.message.self {
+  align-self: flex-end;
+  text-align: right;
+}
+
+/* Meta info (username + time) */
+.meta,
+.message-header {
+  font-size: 0.75rem;
+  color: #555;
+  margin-bottom: 3px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+/* System message */
 .system-message {
   text-align: center;
   width: 100%;
@@ -46,21 +88,38 @@
   opacity: 0.85;
 }
 
-/* === Message bubble === */
+/* ======================================
+   💭 MESSAGE BUBBLES
+====================================== */
+.bubble,
 .message-bubble {
-  display: flex;
-  align-items: flex-start;
-  background: #f1f3f4;
   border-radius: 12px;
-  padding: 8px 10px;
-  margin: 4px 0;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  padding: 8px 12px;
+  font-size: 0.95rem;
+  line-height: 1.4;
+  word-wrap: break-word;
   width: fit-content;
   max-width: 75%;
-  word-wrap: break-word;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 
-/* Avatar styling */
+/* Current user (blue bubble) */
+.message.self .bubble,
+.message.self .message-bubble {
+  background: #007bff;
+  color: #fff;
+}
+
+/* Other users (light bubble) */
+.message.other .bubble,
+.message.other .message-bubble {
+  background: #e8f0fe;
+  color: #000;
+}
+
+/* ======================================
+   🖼️ AVATAR & CONTENT
+====================================== */
 .avatar {
   width: 36px;
   height: 36px;
@@ -70,27 +129,22 @@
   object-fit: cover;
 }
 
-/* Message text + header */
 .message-content {
   display: flex;
   flex-direction: column;
 }
-.message-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 3px;
-}
+
 .timestamp {
   font-size: 0.75em;
   color: #aaa;
 }
+
 .message-body {
   font-size: 0.95em;
   color: #222;
 }
 
-/* === Image messages === */
+/* Image messages */
 .chat-image {
   max-width: 240px;
   width: 200px;
@@ -99,7 +153,9 @@
   border: 1px solid #ccc;
 }
 
-/* === Input area === */
+/* ======================================
+   ✏️ CHAT INPUT AREA
+====================================== */
 .chat-input {
   display: flex;
   align-items: center;
@@ -107,44 +163,56 @@
   padding: 12px;
   background: #f1f1f1;
   border-top: 1px solid #ddd;
-  width: 1160px;
 }
 
+.chat-textbox,
 .chat-input input[type='text'] {
   flex: 1;
-  padding: 10px;
+  padding: 10px 12px;
   border-radius: 8px;
   border: 1px solid #ccc;
   outline: none;
   font-size: 0.95em;
+  color: #000;
+  min-width: 0;
 }
 
+.chat-textbox:focus,
 .chat-input input[type='text']:focus {
   border-color: #007bff;
+  background: #fff;
 }
 
+/* Upload icon */
 .upload-btn {
   cursor: pointer;
-  font-size: 3em;
+  font-size: 1.8em;
   color: #555;
+  transition: color 0.2s;
 }
 
 .upload-btn:hover {
   color: #007bff;
 }
 
+/* Send button */
+.chat-button,
 .chat-input button {
-  padding: 8px 14px;
-  background: #007bff;
-  width: 80px;
-  border: none;
-  border-radius: 8px;
+  width: 70px;
+  background: #2563eb;
   color: white;
+  border: none;
+  padding: 8px 8px;
+  border-radius: 6px;
+  font-size: 13px;
   font-weight: 500;
   cursor: pointer;
-  transition: 0.2s;
+  white-space: nowrap;
+  transition: background 0.2s, transform 0.1s;
 }
 
+.chat-button:hover,
 .chat-input button:hover {
-  background: #0056b3;
+  background: #1d4ed8;
+  transform: scale(1.05);
 }
